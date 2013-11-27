@@ -1,16 +1,10 @@
 /*
  * IRQ Handlers defined in assembler code
- * This is important because an handler must return in a specifiw way that
+ * This is important because an handler must return in a specific way that
  * can't be achieved in Rust code (see handlers.s)
  */
 
-extern
-{
-    /* 
-     * FIXME: Rustc is unable to cast fn pointers to u64 at compile time 
-     */
-    fn _irq_default_handler();
-}
+mod idt_handlers;
 
 /* 
  * Struct representing an entry of the IDT table. Basically contains the 
@@ -54,39 +48,15 @@ static mut idt_init: bool = false;
 
 static mut descriptors: [InterruptDescr, ..IDT_SIZE] = [InterruptDescr 
 {
-    /* FIXME: the commented expressions here should compile */
-
-    clbk_low:  0, //_irq_default_handler as u16,
-    clbk_mid:  0, //((_irq_default_handler as u64 >> 16) & 0xFFFF) as u16,
-    clbk_high: 0, //((_irq_default_handler as u64 >> 32) & 0xFFFF) as u32,
-
+    clbk_low:  0,
+    clbk_mid:  0,
+    clbk_high: 0,
     selector: 0x08,
     flags: 0x8E,
-
     zero: 0,
     zero2: 0
 }, ..IDT_SIZE];
 
-/* 
- * FIXME: this should compile but unsafe blocks in constant expressions
- * is currently unimplemented, see #9852 
- */
-
-/*
-static mut table: IDTable = unsafe 
-    { 
-        IDTable 
-        { 
-            limit: IDT_SIZE * 8,
-            base: &descriptors  
-        }
-     }; 
-*/
-
-/* FIXME: the version above should be used */
-/* nomangle ensure it will be accessible by plain ASM */
-
-#[no_mangle]
 pub static mut idt_table: IDTable = IDTable 
 { 
     limit: 0, 
@@ -110,7 +80,11 @@ pub unsafe fn load_descriptor(num: u16, clbk: u64, flags: u8, selector: u16)
 /* called from ASM */
 
 #[no_mangle]
-pub extern "C" fn irq_default_handler(no: u16) { }
+pub extern "C" fn irq_default_handler(no: u16)
+{
+    ::util::kprint("IRQ ");
+    ::util::kprint_hex(no as u64);
+}
 
 pub unsafe fn setup() 
 {
@@ -133,7 +107,7 @@ pub unsafe fn setup()
 
     while i < IDT_SIZE
     { 
-        let clbk_addr = _irq_default_handler as u64;
+        let clbk_addr = idt_handlers::get_irq_handler(i);
         load_descriptor(i, clbk_addr, 0x8E, 0x08);
         i += 1
     }
@@ -151,7 +125,7 @@ pub unsafe fn setup()
     ::arch::io::outb(0x21, 0x0);
     ::arch::io::outb(0xA1, 0x0);
 
-    asm!("lidt (idt_table)");
+    asm!("lidt ($0)" :: "r" (idt_table));
     asm!("sti");
 
  //   asm!("divb 0");

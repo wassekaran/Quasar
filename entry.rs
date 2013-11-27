@@ -1,5 +1,7 @@
 #[link(name = "kernel", vers = "0.1")];
 #[feature(globs)];
+#[feature(macro_rules)];
+#[feature(asm)];
 #[allow(ctypes)];
 
 #[no_std];

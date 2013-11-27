@@ -30,7 +30,7 @@ arch/$(ARCH)/handlers.o: arch/$(ARCH)/handlers.s
 	$(AS) $(ASFLAGS) -o $@ $^
 
 %.o: %.rs
-	$(RUSTC) $(RUSTFLAGS) -c $^
+	$(RUSTC) $(RUSTFLAGS) -c $^ -o $@
 
 $(LOADER):
 	make -C arch/$(ARCH)/boot/
