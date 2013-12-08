@@ -126,10 +126,6 @@ entry_point:
     cli
     jmp $
 
-; This symbol is needed by Rust at link-time
-
-__morestack:
-    ret
 
 ; 32-bits code part that do 64 bit initialization
 
