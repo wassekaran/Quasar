@@ -5,8 +5,8 @@
 #[allow(ctypes)];
 
 #[no_std];
-#[no_core];
 
+pub mod uefi;
 pub mod util;
 pub mod arch;
 pub mod runtime;
