@@ -1,0 +1,8 @@
+/*.cache
+/*.img
+/configure
+/config.log
+/config.status
+/iso
+*.o
+Makefile

@@ -1,0 +1,73 @@
+LD = @LD@
+AS = @NASM@
+RUSTC = @RUSTC@
+
+SRC_DIR = @srcdir@
+# FIXME
+TGT_ARCH = x86_64
+
+ARCH_SRC_DIR = $(SRC_DIR)/arch/$(TGT_ARCH)/
+
+QUASAR_KERNEL_ARCH_S_SOURCE = $(shell find $(ARCH_SRC_DIR) -name "*.s")
+QUASAR_KERNEL_S_SOURCE = $(QUASAR_KERNEL_ARCH_S_SOURCE)
+QUASAR_KERNEL_RUST_SOURCE = $(shell find $(SRC_DIR) -name "*.rs")
+QUASAR_KERNEL_RUST_MAIN = $(SRC_DIR)/kernel.rs
+
+QUASAR_KERNEL_RUST_OBJ = $(QUASAR_KERNEL_RUST_MAIN:.rs=.o)
+QUASAR_KERNEL_S_OBJ = $(QUASAR_KERNEL_S_SOURCE:.s=.o)
+QUASAR_KERNEL_OBJ = $(QUASAR_KERNEL_S_OBJ) $(QUASAR_KERNEL_RUST_OBJ)
+
+QUASAR_MAIN_BIN = quasar.img
+
+KERNEL_LINKER_FILE = $(ARCH_SRC_DIR)/linker.ld
+
+ASFLAGS = -felf64
+RUSTFLAGS = -O --target $(TGT_ARCH)-elf-linux
+MAIN_LDFLAGS = -z nodefaultlib -n
+
+all: $(QUASAR_MAIN_BIN)
+
+$(QUASAR_MAIN_BIN): $(QUASAR_KERNEL_OBJ)
+	$(LD) $(MAIN_LDFLAGS) -T $(KERNEL_LINKER_FILE) -o $@ $^
+
+%.o: %.s
+	$(AS) $(ASFLAGS) -o $@ $^
+
+$(QUASAR_KERNEL_RUST_OBJ): $(QUASAR_KERNEL_RUST_SOURCE)
+	$(RUSTC) $(RUSTFLAGS) --emit obj -o $@ $(QUASAR_KERNEL_RUST_MAIN)
+
+clean:
+	rm -f $(QUASAR_KERNEL_OBJ)
+	rm -f $(QUASAR_MAIN_BIN)
+
+ISO = quasar.iso
+ISO_DIR = iso
+BOOT_DIR = $(ISO_DIR)/boot
+GRUB_DIR = $(BOOT_DIR)/grub
+
+define GRUB_CONF
+	set timeout=1
+	set default=0
+	menuentry "My Os" {
+    	multiboot2 /boot/quasar.img
+	    boot
+	}
+endef
+
+geniso: $(ISO)
+
+$(ISO): $(GRUB_CFG) $(QUASAR_MAIN_BIN)
+	cp -v $(QUASAR_MAIN_BIN) $(BOOT_DIR)
+	grub-mkrescue -o $@ $(ISO_DIR)
+
+$(GRUB_CFG): $(ISO_DIR) $(GRUB_DIR)
+	echo -e $(GRUB_CONF) >> $(GRUB_DIR)/grub.cfg
+
+$(ISO_DIR):
+	mkdir -pv $@
+
+$(GRUB_DIR):
+	mkdir -pv $@
+
+run: geniso
+	qemu-system-x86_64 $(ISO) -monitor stdio

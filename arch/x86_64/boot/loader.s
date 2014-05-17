@@ -2,7 +2,7 @@
 ;
 ; Copyright (C) 2013 - Leo Testard <leo.testard@gmail.com>
 ;
-; inspired from existing code as 
+; inspired from existing code at
 ; http://wiki.osdev.org/64-bit_Higher_Half_Kernel_with_GRUB_2
 ;
 ; Entry point of the kernel binary. Contains both 32 and 64 bits code parts.
@@ -21,7 +21,7 @@
 [EXTERN _load_end]
 [EXTERN _bss_end]
  
-ALIGN 8
+ALIGN 16
 
 _hdr_start:
 
@@ -49,8 +49,9 @@ _hdr_start:
  
     ; Entry point override
     DW  3, 0
-    DD  12
+    DD  16
     DD  entry_point
+    DD  0
  
     ; End Of Tags
     DW  0, 0
@@ -101,8 +102,7 @@ entry_point:
 ; and jump to main
  
 [BITS 64]
-[EXTERN main]
-[GLOBAL __morestack]
+[EXTERN kmain]
 
 .gdt2_ready:
 
@@ -121,11 +121,10 @@ entry_point:
 
     ; Jump to kernel
  
-    mov rax, main
+    mov rax, kmain
     call rax
     cli
     jmp $
-
 
 ; 32-bits code part that do 64 bit initialization
 
