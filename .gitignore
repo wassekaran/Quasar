@@ -1,5 +1,6 @@
 /*.cache
 /*.img
+/*.iso
 /configure
 /config.log
 /config.status
