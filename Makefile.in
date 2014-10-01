@@ -44,6 +44,7 @@ ISO = quasar.iso
 ISO_DIR = iso
 BOOT_DIR = $(ISO_DIR)/boot
 GRUB_DIR = $(BOOT_DIR)/grub
+GRUB_CFG = $(GRUB_DIR)/grub.cfg
 
 define GRUB_CONF
 	set timeout=1
@@ -54,14 +55,16 @@ define GRUB_CONF
 	}
 endef
 
+export GRUB_CONF
+
 geniso: $(ISO)
 
 $(ISO): $(GRUB_CFG) $(QUASAR_MAIN_BIN)
 	cp -v $(QUASAR_MAIN_BIN) $(BOOT_DIR)
 	grub-mkrescue -o $@ $(ISO_DIR)
 
-$(GRUB_CFG): $(ISO_DIR) $(GRUB_DIR)
-	echo -e $(GRUB_CONF) >> $(GRUB_DIR)/grub.cfg
+$(GRUB_CFG): $(GRUB_DIR)
+	@echo "$$GRUB_CONF" > $@
 
 $(ISO_DIR):
 	mkdir -pv $@
