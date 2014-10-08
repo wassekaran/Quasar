@@ -3,10 +3,10 @@ pub trait Add<RHS, Result> {
     fn add(&self, rhs: &RHS) -> Result;
 }
 
-impl<T> Add<uint, *T> for *T {
-    fn add(&self, offset: &uint) -> *T {
+impl<T> Add<uint, *const T> for *const T {
+    fn add(&self, offset: &uint) -> *const T {
         let ptr = *self as uint;
-        (ptr + *offset) as *T
+        (ptr + *offset) as *const T
     }
 }
 

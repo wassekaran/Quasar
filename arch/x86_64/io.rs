@@ -2,7 +2,7 @@
 pub use self::ports::out;
 
 mod ports {
-    trait Ports {
+    pub trait Ports {
         unsafe fn out(port: u16, value: Self);
     }
 
@@ -30,6 +30,7 @@ mod ports {
 pub mod console {
     use super::out;
 
+    #[allow(dead_code)]
     enum Color {
         Black       = 0x0,
         Blue        = 0x1,
@@ -95,6 +96,8 @@ pub mod console {
     #[inline(always)]
     unsafe fn do_putcar(c: u8, color: Color) {
         // get video_ptr
+        cursor_x = 0;
+        cursor_y = 0;
         let offset = cursor_y * 80 + cursor_x;
         let video_ptr = (VIDEO_MEM + offset * 2) as *mut u8;
         *(video_ptr + 1) = color as u8;
