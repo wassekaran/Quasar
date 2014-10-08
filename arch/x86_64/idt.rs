@@ -4,9 +4,11 @@
 use runtime::io;
 use super::io::out;
 
+#[path = "idt_handlers.rs"]
 mod idt_handlers;
 
 #[packed]
+#[allow(dead_code)]
 // Struct representing an entry of the IDT table. Basically contains the
 // address of an handler and some flags
 struct InterruptDescr {
@@ -25,7 +27,7 @@ struct InterruptDescr {
 // of its start
 struct IDTable {
     limit: u16,
-    base: *[InterruptDescr, ..IDT_SIZE]
+    base: *const [InterruptDescr, ..IDT_SIZE as uint]
 }
 
 static IDT_SIZE: u16 = 256;
@@ -35,7 +37,7 @@ static mut idt_init: bool = false;
 // All the entries are statically initialized so that all interrupts are by
 // default handled by a function that do nothing.
 // Specialized handlers will come later
-static mut descriptors: [InterruptDescr, ..IDT_SIZE] = [InterruptDescr {
+static mut descriptors: [InterruptDescr, ..IDT_SIZE as uint] = [InterruptDescr {
     clbk_low:  0,
     clbk_mid:  0,
     clbk_high: 0,
@@ -43,11 +45,11 @@ static mut descriptors: [InterruptDescr, ..IDT_SIZE] = [InterruptDescr {
     flags: 0x8E,
     zero: 0,
     zero2: 0
-}, ..IDT_SIZE];
+}, ..IDT_SIZE as uint];
 
 static mut idt_table: IDTable = IDTable {
     limit: 0, 
-    base: 0 as *[InterruptDescr, ..IDT_SIZE] 
+    base: 0 as *const [InterruptDescr, ..IDT_SIZE as uint]
 };
 
 pub unsafe fn load_descriptor(num: u16, clbk: u64, flags: u8, selector: u16) {
@@ -77,8 +79,8 @@ pub unsafe fn setup() {
     idt_init = false;
 
     // FIXME: this souldn't be necessary (see above)
-    idt_table.limit = IDT_SIZE * 8 as u16;
-    idt_table.base = &descriptors as *[InterruptDescr, ..256];
+    idt_table.limit = IDT_SIZE * 8;
+    idt_table.base = &descriptors as *const [InterruptDescr, ..256];
 
     // FIXME: this shouldn't be necessary (see above)
     let mut i = 0;

@@ -2,7 +2,7 @@
 pub use self::ports::out;
 
 mod ports {
-    trait Ports {
+    pub trait Ports {
         unsafe fn out(port: u16, value: Self);
     }
 
@@ -30,6 +30,7 @@ mod ports {
 pub mod console {
     use super::out;
 
+    #[allow(dead_code)]
     enum Color {
         Black       = 0x0,
         Blue        = 0x1,
