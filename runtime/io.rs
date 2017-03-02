@@ -3,7 +3,7 @@ use runtime::lang::repr::Repr;
 mod console {
     use arch::console;
 
-    pub unsafe fn puts(s: *const u8, len: uint) {
+    pub unsafe fn puts(s: *const u8, len: usize) {
         let mut i = 0;
         while i < len {
             console::putcar(*(s + i));

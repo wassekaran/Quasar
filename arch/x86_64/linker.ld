@@ -16,9 +16,9 @@ SECTIONS
 
     .boot :
     {
-        *(.mbhdr)
+        KEEP(*(.mbhdr))
         _load_start = .;
-        *(.boot)
+        KEEP(*(.boot))
 
         . = ALIGN(4096);
 

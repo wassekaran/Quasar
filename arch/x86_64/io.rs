@@ -29,6 +29,7 @@ mod ports {
 
 pub mod console {
     use super::out;
+    use self::Color::*;
 
     #[allow(dead_code)]
     enum Color {
@@ -71,11 +72,30 @@ pub mod console {
     unsafe fn newline() {
         cursor_x = 0;
         cursor_y += 1;
+
+        if cursor_y >= 25 {
+            scroll();
+        }
+
         update_cursor();
     }
 
     #[inline(always)]
     unsafe fn scroll() {
+        let video_ptr = VIDEO_MEM as *mut u8;
+        for i in 1 .. 25 {
+            for j in 0 .. 80 {
+                let orig = i * 80 + j;
+                let dest = (i - 1) * 80 + j;
+                *video_ptr.offset(dest * 2) = *video_ptr.offset(orig * 2);
+                *video_ptr.offset(dest * 2 + 1) = *video_ptr.offset(orig * 2 + 1);
+            }
+        }
+        for i in 0 .. 80 {
+            let offset = 24 * 80 + i;
+            *video_ptr.offset(offset * 2) = 0x20;
+        }
+        cursor_y -= 1;
     }
 
     #[inline(always)]
@@ -86,21 +106,15 @@ pub mod console {
             newline();
         }
 
-        if cursor_y >= 25 {
-            scroll();
-        }
-
         update_cursor();
     }
 
     #[inline(always)]
     unsafe fn do_putcar(c: u8, color: Color) {
         // get video_ptr
-        cursor_x = 0;
-        cursor_y = 0;
         let offset = cursor_y * 80 + cursor_x;
         let video_ptr = (VIDEO_MEM + offset * 2) as *mut u8;
-        *(video_ptr + 1) = color as u8;
+        *video_ptr.offset(1) = color as u8;
         *video_ptr = c;
         forward_cursor();
     }
@@ -112,4 +126,29 @@ pub mod console {
             _ => unsafe { do_putcar(c, LightGray); }
         }
     }
+
+    pub unsafe fn puts(s: *const u8, len: usize) {
+        let mut i = 0;
+        while i < len {
+            putcar(*s.offset(i as isize));
+            i += 1;
+        }
+    }
+
+    pub fn println(s: &str) {
+        use core::slice::SliceExt;
+        unsafe { puts(s.as_ptr(), s.len()) }
+    }
 }
+
+use core::fmt;
+
+pub struct Console;
+impl fmt::Write for Console {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        console::println(s);
+        Ok(())
+    }
+}
+
+

@@ -22,8 +22,8 @@ QUASAR_MAIN_BIN = quasar.img
 KERNEL_LINKER_FILE = $(ARCH_SRC_DIR)/linker.ld
 
 ASFLAGS = -felf64
-RUSTFLAGS = -O --target $(TGT_ARCH)-elf-linux
-MAIN_LDFLAGS = -z nodefaultlib -n
+RUSTFLAGS = -O --target $(TGT_ARCH)-unknown-linux-gnu
+MAIN_LDFLAGS = -z nodefaultlib -n --gc-sections
 
 all: $(QUASAR_MAIN_BIN)
 
@@ -34,7 +34,7 @@ $(QUASAR_MAIN_BIN): $(QUASAR_KERNEL_OBJ)
 	$(AS) $(ASFLAGS) -o $@ $^
 
 $(QUASAR_KERNEL_RUST_OBJ): $(QUASAR_KERNEL_RUST_SOURCE)
-	$(RUSTC) $(RUSTFLAGS) --emit obj -o $@ $(QUASAR_KERNEL_RUST_MAIN)
+	$(RUSTC) $(RUSTFLAGS) --crate-type staticlib -o $@ $(QUASAR_KERNEL_RUST_MAIN)
 
 clean:
 	rm -f $(QUASAR_KERNEL_OBJ)

@@ -3,23 +3,23 @@
 
 pub mod intrinsics {
     extern "rust-intrinsic" {
-        pub fn copy_nonoverlapping_memory<T>(src: *mut T, dst: *const T, count: uint);
+        pub fn copy_nonoverlapping<T>(src: *const T, dst: *mut T, count: usize);
         pub fn transmute<T, U>(e: T) -> U;
         pub fn uninit<T>() -> T;
     }
 }
 
-mod kinds {
-    #[lang = "sized"] trait Sized {}
-    #[lang = "copy" ] trait Copy for Sized? {}
+pub mod kinds {
+    #[lang = "sized"] pub trait Sized {}
+    #[lang = "copy" ] pub trait Copy: Sized {}
 }
 
 mod failure {
-    #[lang = "fail_bounds_check"]
-    fn fail_bounds_check(_: &(&'static str, uint), _: uint, _: uint) -> ! {
-        ::runtime::io::println("Bound checking failed");
-        loop {}
-    }
+    //#[lang = "fail_bounds_check"]
+    //fn fail_bounds_check(_: &(&'static str, usize), _: usize, _: usize) -> ! {
+    //    ::runtime::io::println("Bound checking failed");
+    //    loop {}
+    //}
 }
 
 pub mod ptr {
@@ -27,7 +27,7 @@ pub mod ptr {
 
     pub unsafe fn read<T>(src: *const T) -> T {
         let mut ret = intrinsics::uninit();
-        intrinsics::copy_nonoverlapping_memory(&mut ret, src, 1);
+        intrinsics::copy_nonoverlapping(src, &mut ret, 1);
         ret
     }
 }
@@ -37,10 +37,10 @@ pub mod repr {
 
     pub struct Slice<T> {
         pub data: *const T,
-        pub len: uint
+        pub len: usize
     }
 
-    pub trait Repr<T> {
+    pub trait Repr<T>: super::kinds::Copy {
         #[inline(always)]
         fn repr(&self) -> T {
             unsafe { transmute_copy(self) }

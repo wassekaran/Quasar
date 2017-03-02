@@ -124,7 +124,6 @@ entry_point:
     mov rax, kmain
     call rax
     cli
-    jmp $
 
 ; 32-bits code part that do 64 bit initialization
 
