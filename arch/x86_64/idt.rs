@@ -1,15 +1,4 @@
-// IRQ Handlers defined in assembler code
-// This is important because an handler must return in a specific way that
-// can't be achieved in Rust code (see handlers.s)
 use super::io::{self, out};
-
-extern {
-    static _asm_irq_handler_array: [u64 ; IDT_SIZE as usize];
-}
-
-pub fn get_irq_handler(num: u16) -> u64 {
-    _asm_irq_handler_array[num as usize]
-}
 
 
 #[repr(packed)]
@@ -37,7 +26,6 @@ struct IDTable {
 }
 
 const IDT_SIZE: u16 = 256;
-static mut idt_init: bool = false;
 
 // The table itself, an array of 256 entries.
 // All the entries are statically initialized so that all interrupts are by
@@ -54,7 +42,7 @@ static mut descriptors: [InterruptDescr ; IDT_SIZE as usize] = [InterruptDescr {
 } ; IDT_SIZE as usize];
 
 static mut idt_table: IDTable = IDTable {
-    limit: 0, 
+    limit: 0,
     base: 0 as *const [InterruptDescr ; IDT_SIZE as usize]
 };
 
@@ -77,7 +65,16 @@ pub extern "C" fn irq_default_handler(irqno: u16) {
     let _ = writeln!(io::Console, "IRQ {}", irqno);
 }
 
+extern {
+    // IRQ Handlers defined in assembler code
+    // This is important because an handler must return in a specific way that
+    // can't be achieved in Rust code (see handlers.s)
+    static _asm_irq_handler_array: [u64 ; IDT_SIZE as usize];
+}
+
 pub unsafe fn setup() {
+    static mut idt_init: bool = false;
+
     if idt_init {
         // IDT already initialized
         return;
@@ -92,7 +89,7 @@ pub unsafe fn setup() {
     // FIXME: this shouldn't be necessary (see above)
     let mut i = 0;
     while i < IDT_SIZE {
-        let clbk_addr = get_irq_handler(i);
+        let clbk_addr = _asm_irq_handler_array[i as usize];
         load_descriptor(i, clbk_addr, 0x8E, 0x08);
         i += 1
     }

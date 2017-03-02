@@ -20,6 +20,7 @@ mod ports {
         }
     }
 
+    #[inline(always)]
     pub fn out<T: Ports>(port: u16, value: T) {
         unsafe {
             Ports::out(port, value)
@@ -29,7 +30,6 @@ mod ports {
 
 pub mod console {
     use super::out;
-    use self::Color::*;
 
     #[allow(dead_code)]
     enum Color {
@@ -123,7 +123,7 @@ pub mod console {
     pub fn putcar(c: u8) {
         match c {
             10 => unsafe { newline() },
-            _ => unsafe { do_putcar(c, LightGray); }
+            _ => unsafe { do_putcar(c, Color::LightGray); }
         }
     }
 
@@ -137,8 +137,8 @@ pub mod console {
 }
 
 use core::fmt;
-
 pub struct Console;
+
 impl fmt::Write for Console {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         use core::slice::SliceExt;

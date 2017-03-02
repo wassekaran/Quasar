@@ -20,43 +20,41 @@
 [EXTERN _load_start]
 [EXTERN _load_end]
 [EXTERN _bss_end]
- 
+
 ALIGN 16
 
 _hdr_start:
-
-    ; Magic number 
-    DD  0xE85250D6
+    ; Multiboot 1.X magic number
+    dd  0xE85250D6
 
     ; Architecture
-    DD  0
+    dd  0
 
     ; Length of the mboot header
-    DD  _hdr_end - _hdr_start
+    dd  _hdr_end - _hdr_start
 
     ; Checksum
     DD  - (0xE85250D6 + 0 + (_hdr_end - _hdr_start))
- 
+
     ; Tags
- 
+
     ; Sections override
-    DW  2, 0
-    DD  24
-    DD  _hdr_start
-    DD  _load_start
-    DD  _load_end
-    DD  _bss_end
- 
+    dw  2, 0
+    dd  24
+    dd  _hdr_start
+    dd  _load_start
+    dd  _load_end
+    dd  _bss_end
+
     ; Entry point override
-    DW  3, 0
-    DD  16
-    DD  entry_point
-    DD  0
- 
+    dw  3, 0
+    dd  16
+    dd  entry_point
+    dd  0
+
     ; End Of Tags
-    DW  0, 0
-    DD  8
- 
+    dw  0, 0
+    dd  8
 _hdr_end:
 
 ; Main entry point, executed directly upon loading by Grub
@@ -67,65 +65,57 @@ _hdr_end:
 [EXTERN stack]
 
 entry_point:
-
     ; loads first GDT (see at the end of this file)
+    mov     eax,    gdtr1
+    lgdt    [eax]
 
-    mov eax, gdtr1
-    lgdt [eax]
- 
-    push 0x08
-    push .gdt_ready
+    push    0x08
+    push    .gdt_ready
     retf
- 
-.gdt_ready:
 
-    mov eax, 0x10
-    mov ds, ax
-    mov ss, ax
-    mov esp, stack
+.gdt_ready:
+    mov     eax,    0x10
+    mov     ds,     ax
+    mov     ss,     ax
+    mov     esp,    stack
 
     ; go to long mode
- 
-    call setup_long_mode
+    call    setup_long_mode
 
     ; loads 64-bit GDT
- 
-    mov eax, gdtr2
-    lgdt [gdtr2]
- 
-    push 0x08
-    push .gdt2_ready
+    mov     eax,    gdtr2
+    lgdt    [gdtr2]
+
+    push    0x08
+    push    .gdt2_ready
     retf
 
 ; This part runs once the CPU is in long-mode. This is 64-bit code
 ; This code is reponsible of setting up the environment for the kernel
 ; and jump to main
- 
+
 [BITS 64]
 [EXTERN kmain]
 
 .gdt2_ready:
+    mov     eax,    0x10
+    mov     ds,     ax
+    mov     es,     ax
+    mov     ss,     ax
+    mov     rsp,    (stack + 0xFFFFFFFF80000000)
 
-    mov eax, 0x10
-    mov ds, ax
-    mov es, ax
-    mov ss, ax
- 
-    mov rsp, stack + 0xFFFFFFFF80000000
- 
     ; If you later decide to unmap the lower zone, you will have an invalid
     ; Gdt if you're still using Gdtr2
 
-    mov rax, gdtr3
-    lgdt [rax]
+    mov     rax,    gdtr3
+    lgdt    [rax]
 
     ; Jump to kernel
- 
-    mov rax, kmain
-    call rax
+
+    mov     rax,    kmain
+    call    rax
     cli
-    jmp $
-    ret
+    jmp     $
 
 ; 32-bits code part that do 64 bit initialization
 
@@ -138,74 +128,68 @@ entry_point:
 [EXTERN pagedir]
 
 setup_long_mode:
-
     ; setup the paging tables
+    mov     eax,    pdpt
+    or      eax,    1
+    mov     [pml4], eax
+    mov     [pml4 + 0xFF8],     eax
 
-    mov eax, pdpt
-    or eax, 1
-    mov [pml4], eax
-    mov [pml4 + 0xFF8], eax
- 
-    mov eax, pagedir
-    or eax, 1
-    mov [pdpt], eax
-    mov [pdpt + 0xFF0], eax
- 
-    mov dword [pagedir], 0x000083
-    mov dword [pagedir + 8], 0x200083
-    mov dword [pagedir + 16], 0x400083
-    mov dword [pagedir + 24], 0x600083
- 
+    mov     eax,    pagedir
+    or      eax,    1
+    mov     [pdpt], eax
+    mov     [pdpt + 0xFF0],     eax
+
+    mov     dword   [pagedir],      0x000083
+    mov     dword   [pagedir + 8],  0x200083
+    mov     dword   [pagedir + 16], 0x400083
+    mov     dword   [pagedir + 24], 0x600083
+
     ; load page directory in the CPU register
 
-    mov eax, pml4
-    mov cr3, eax
- 
+    mov     eax,    pml4
+    mov     cr3,    eax
+
     ; Enable PAE
 
-    mov eax, cr4
-    or eax, 1 << 5
-    mov cr4, eax
- 
+    mov     eax,    cr4
+    or      eax,    1 << 5
+    mov     cr4,    eax
+
     ; Enable Long Mode in the MSR
 
-    mov ecx, 0xC0000080
+    mov     ecx,    0xC0000080
     rdmsr
-    or eax, 1 << 8
+    or      eax,    (1 << 8)
     wrmsr
- 
+
     ; Enable Paging
 
-    mov eax, cr0
-    or eax, 1 << 31
-    mov cr0, eax
- 
+    mov     eax,    cr0
+    or      eax,    (1 << 31)
+    mov     cr0,    eax
+
     ret
 
 ; GDT data structures
 
 tmp_gdt:
+    dq  0x0000000000000000
+    dq  0x00CF9A000000FFFF
+    dq  0x00CF92000000FFFF
+    dq  0x0000000000000000
+    dq  0x00A09A0000000000
+    dq  0x00A0920000000000
 
-    DQ  0x0000000000000000
-    DQ  0x00CF9A000000FFFF
-    DQ  0x00CF92000000FFFF
-    DQ  0x0000000000000000
-    DQ  0x00A09A0000000000
-    DQ  0x00A0920000000000
- 
 gdtr1:
+    dw  23
+    dd  tmp_gdt
 
-    DW  23
-    DD  tmp_gdt
- 
 gdtr2:
+    dw  23
+    dd  tmp_gdt + 24
+    dd  0
 
-    DW  23
-    DD  tmp_gdt + 24
-    DD  0
- 
 gdtr3:
-
-    DW  23    
-    DQ  tmp_gdt + 24 + 0xFFFFFFFF80000000
+    dw  23
+    dq  tmp_gdt + 24 + 0xFFFFFFFF80000000
 
