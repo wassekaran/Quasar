@@ -66,8 +66,9 @@ pub unsafe fn load_descriptor(num: u16, clbk: u64, flags: u8, selector: u16) {
 
 #[no_mangle]
 // called from ASM
-pub extern "C" fn irq_default_handler(_: u16) {
-    io::console::println("IRQ");
+pub extern "C" fn irq_default_handler(irqno: u16) {
+    use core::fmt::Write;
+    let _ = writeln!(io::Console, "IRQ {}", irqno);
 }
 
 pub unsafe fn setup() {

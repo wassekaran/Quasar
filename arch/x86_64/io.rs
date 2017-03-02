@@ -119,13 +119,16 @@ pub mod console {
             i += 1;
         }
     }
+}
 
-    pub fn println(s: &str) {
+use core::fmt;
+
+pub struct Console;
+impl fmt::Write for Console {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
         use core::slice::SliceExt;
         let b = s.as_bytes();
-        unsafe {
-            puts(b.as_ptr(), b.len());
-            putcar(10);
-        }
+        unsafe { console::puts(b.as_ptr(), b.len()) };
+        Ok(())
     }
 }

@@ -12,12 +12,13 @@
 #![deny(warnings)]
 
 pub use native::arch;
+use core::fmt::Write;
 
 mod native;
 
 #[no_mangle]
 pub unsafe fn kmain () {
-    arch::io::console::println("QUASAR");
+    let _ = writeln!(arch::io::Console, "QUASAR");
     arch::idt::setup();
     loop {}
 }
@@ -31,6 +32,6 @@ pub extern fn rust_eh_personality() {}
 pub extern fn rust_begin_panic(_msg: core::fmt::Arguments,
                                _file: &'static str,
                                _line: u32) -> ! {
-    arch::io::console::println("kernel panic");
+    let _ = writeln!(arch::io::Console, "kernel panic");
     loop {}
 }
