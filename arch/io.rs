@@ -4,6 +4,6 @@ pub use self::x86_64::io::*;
 
 mod x86_64
 {
-    mod io;
+    pub mod io;
 }
 
