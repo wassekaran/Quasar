@@ -1,5 +1,4 @@
 #![crate_name = "quasar"]
-#![crate_type = "dylib"]
 
 #![feature(asm)]
 #![feature(core_slice_ext)]
