@@ -113,7 +113,8 @@ entry_point:
  
     mov rsp, stack + 0xFFFFFFFF80000000
  
-    ; If you later decide to unmap the lower zone, you will have an invalid Gdt if you're still using Gdtr2
+    ; If you later decide to unmap the lower zone, you will have an invalid
+    ; Gdt if you're still using Gdtr2
 
     mov rax, gdtr3
     lgdt [rax]

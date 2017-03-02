@@ -1,9 +1,9 @@
-TARGET = loader.o
-SRC = $(TARGET:.o=.s)
+SRC = loader.s
+TARGET = $(SRC:.s=.o)
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
+%.o: %.s
 	$(AS) $(ASFLAGS) -o $@ $^
 
 clean:
