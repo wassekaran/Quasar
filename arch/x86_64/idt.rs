@@ -3,8 +3,14 @@
 // can't be achieved in Rust code (see handlers.s)
 use super::io::{self, out};
 
-#[path = "idt_handlers.rs"]
-mod idt_handlers;
+extern {
+    static _asm_irq_handler_array: [u64 ; IDT_SIZE as usize];
+}
+
+pub fn get_irq_handler(num: u16) -> u64 {
+    _asm_irq_handler_array[num as usize]
+}
+
 
 #[repr(packed)]
 #[allow(dead_code)]
@@ -86,7 +92,7 @@ pub unsafe fn setup() {
     // FIXME: this shouldn't be necessary (see above)
     let mut i = 0;
     while i < IDT_SIZE {
-        let clbk_addr = idt_handlers::get_irq_handler(i);
+        let clbk_addr = get_irq_handler(i);
         load_descriptor(i, clbk_addr, 0x8E, 0x08);
         i += 1
     }

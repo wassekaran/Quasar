@@ -1,20 +1,5 @@
-#![crate_name = "quasar"]
-
-#![feature(asm)]
-#![feature(core_slice_ext)]
-#![feature(intrinsics)]
-#![feature(lang_items)]
-#![no_std]
-
-#![allow(legacy_directory_ownership)]
-#![allow(non_upper_case_globals)]
-#![allow(safe_extern_statics)]
-#![deny(warnings)]
-
-pub use native::arch;
-use core::fmt::Write;
-
-mod native;
+use arch;
+use core::fmt::{self, Write};
 
 #[no_mangle]
 pub unsafe fn kmain () {
@@ -29,7 +14,7 @@ pub extern fn rust_eh_personality() {}
 
 #[lang = "panic_fmt"]
 #[no_mangle]
-pub extern fn rust_begin_panic(_msg: core::fmt::Arguments,
+pub extern fn rust_begin_panic(_msg: fmt::Arguments,
                                _file: &'static str,
                                _line: u32) -> ! {
     let _ = writeln!(arch::io::Console, "kernel panic");
