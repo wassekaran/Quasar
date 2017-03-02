@@ -1,6 +1,6 @@
 pub fn kprint(s: &str)
 {
-    use runtime::{cast, intrinsics};
+    use runtime::{cast, intrinsics, Slice};
 
     unsafe
     {
