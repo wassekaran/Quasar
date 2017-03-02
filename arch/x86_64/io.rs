@@ -29,6 +29,7 @@ mod ports {
 
 pub mod console {
     use super::out;
+    use self::Color::*;
 
     #[allow(dead_code)]
     enum Color {
@@ -98,7 +99,7 @@ pub mod console {
         // get video_ptr
         let offset = cursor_y * 80 + cursor_x;
         let video_ptr = (VIDEO_MEM + offset * 2) as *mut u8;
-        *(video_ptr + 1) = color as u8;
+        *video_ptr.offset(1) = color as u8;
         *video_ptr = c;
         forward_cursor();
     }

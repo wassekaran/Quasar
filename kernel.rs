@@ -1,21 +1,16 @@
 #![crate_name = "quasar"]
 #![crate_type = "dylib"]
 
-#![feature(globs)]
 #![feature(asm)]
+#![feature(core_slice_ext)]
 #![feature(intrinsics)]
 #![feature(lang_items)]
 #![no_std]
 
-#![allow(ctypes)]
-#![deny(managed_heap_memory)]
-#![deny(non_uppercase_statics)]
-#![deny(unnecessary_qualification)]
-#![deny(unnecessary_typecast)]
-#![deny(unused_result)]
+#![allow(legacy_directory_ownership)]
+#![allow(non_upper_case_globals)]
+#![allow(safe_extern_statics)]
 #![deny(warnings)]
-
-#![allow(unused_variable)]
 
 pub use native::arch;
 

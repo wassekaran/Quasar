@@ -6,8 +6,9 @@ use super::io::{self, out};
 #[path = "idt_handlers.rs"]
 mod idt_handlers;
 
-#[packed]
+#[repr(packed)]
 #[allow(dead_code)]
+#[derive(Copy, Clone)]
 // Struct representing an entry of the IDT table. Basically contains the
 // address of an handler and some flags
 struct InterruptDescr {
@@ -20,23 +21,23 @@ struct InterruptDescr {
     zero2: u32
 }
 
-#[packed]
+#[repr(packed)]
 // Struct representing the IDT register, passed as operand to the lidt
 // instruction. Consists of the size of the table in bytes, and the address
 // of its start
 struct IDTable {
     limit: u16,
-    base: *const [InterruptDescr, ..IDT_SIZE as uint]
+    base: *const [InterruptDescr ; IDT_SIZE as usize]
 }
 
-static IDT_SIZE: u16 = 256;
+const IDT_SIZE: u16 = 256;
 static mut idt_init: bool = false;
 
 // The table itself, an array of 256 entries.
 // All the entries are statically initialized so that all interrupts are by
 // default handled by a function that do nothing.
 // Specialized handlers will come later
-static mut descriptors: [InterruptDescr, ..IDT_SIZE as uint] = [InterruptDescr {
+static mut descriptors: [InterruptDescr ; IDT_SIZE as usize] = [InterruptDescr {
     clbk_low:  0,
     clbk_mid:  0,
     clbk_high: 0,
@@ -44,11 +45,11 @@ static mut descriptors: [InterruptDescr, ..IDT_SIZE as uint] = [InterruptDescr {
     flags: 0x8E,
     zero: 0,
     zero2: 0
-}, ..IDT_SIZE as uint];
+} ; IDT_SIZE as usize];
 
 static mut idt_table: IDTable = IDTable {
     limit: 0, 
-    base: 0 as *const [InterruptDescr, ..IDT_SIZE as uint]
+    base: 0 as *const [InterruptDescr ; IDT_SIZE as usize]
 };
 
 pub unsafe fn load_descriptor(num: u16, clbk: u64, flags: u8, selector: u16) {
@@ -56,11 +57,11 @@ pub unsafe fn load_descriptor(num: u16, clbk: u64, flags: u8, selector: u16) {
         return;
     }
 
-    descriptors[num as uint].clbk_low  = (clbk & 0xFFFF) as u16;
-    descriptors[num as uint].clbk_mid  = ((clbk >> 16) & 0xFFFF) as u16;
-    descriptors[num as uint].clbk_high = ((clbk >> 32) & 0xFFFFFFFF) as u32;
-    descriptors[num as uint].selector = selector;
-    descriptors[num as uint].flags = flags;
+    descriptors[num as usize].clbk_low  = (clbk & 0xFFFF) as u16;
+    descriptors[num as usize].clbk_mid  = ((clbk >> 16) & 0xFFFF) as u16;
+    descriptors[num as usize].clbk_high = ((clbk >> 32) & 0xFFFFFFFF) as u32;
+    descriptors[num as usize].selector = selector;
+    descriptors[num as usize].flags = flags;
 }
 
 #[no_mangle]
@@ -79,7 +80,7 @@ pub unsafe fn setup() {
 
     // FIXME: this souldn't be necessary (see above)
     idt_table.limit = IDT_SIZE * 8;
-    idt_table.base = &descriptors as *const [InterruptDescr, ..256];
+    idt_table.base = &descriptors as *const [InterruptDescr ; 256];
 
     // FIXME: this shouldn't be necessary (see above)
     let mut i = 0;
@@ -101,7 +102,7 @@ pub unsafe fn setup() {
     out(0x21, 0x00u8);
     out(0xA1, 0x00u8);
 
-    asm!("lidt ($0)" :: "r" (idt_table));
+    asm!("lidt ($0)" :: "r" (&idt_table));
     asm!("sti");
 }
 
