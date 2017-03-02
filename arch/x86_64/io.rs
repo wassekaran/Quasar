@@ -77,6 +77,20 @@ pub mod console {
 
     #[inline(always)]
     unsafe fn scroll() {
+        let video_ptr = VIDEO_MEM as *mut u8;
+        for i in 1 .. 25 {
+            for j in 0 .. 80 {
+                let orig = i * 80 + j;
+                let dest = (i - 1) * 80 + j;
+                *video_ptr.offset(dest * 2) = *video_ptr.offset(orig * 2);
+                *video_ptr.offset(dest * 2 + 1) = *video_ptr.offset(orig * 2 + 1);
+            }
+        }
+        for i in 0 .. 80 {
+            let offset = 24 * 80 + i;
+            *video_ptr.offset(offset * 2) = 0x20;
+        }
+        cursor_y -= 1;
     }
 
     #[inline(always)]
