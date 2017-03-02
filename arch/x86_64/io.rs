@@ -110,4 +110,21 @@ pub mod console {
             _ => unsafe { do_putcar(c, LightGray); }
         }
     }
+
+    pub unsafe fn puts(s: *const u8, len: usize) {
+        let mut i = 0;
+        while i < len {
+            putcar(*s.offset(i as isize));
+            i += 1;
+        }
+    }
+
+    pub fn println(s: &str) {
+        use core::slice::SliceExt;
+        let b = s.as_bytes();
+        unsafe {
+            puts(b.as_ptr(), b.len());
+            putcar(10);
+        }
+    }
 }

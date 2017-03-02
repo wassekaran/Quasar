@@ -1,8 +1,7 @@
 // IRQ Handlers defined in assembler code
 // This is important because an handler must return in a specific way that
 // can't be achieved in Rust code (see handlers.s)
-use runtime::io;
-use super::io::out;
+use super::io::{self, out};
 
 #[path = "idt_handlers.rs"]
 mod idt_handlers;
@@ -67,7 +66,7 @@ pub unsafe fn load_descriptor(num: u16, clbk: u64, flags: u8, selector: u16) {
 #[no_mangle]
 // called from ASM
 pub extern "C" fn irq_default_handler(_: u16) {
-    io::println("IRQ ");
+    io::console::println("IRQ");
 }
 
 pub unsafe fn setup() {
