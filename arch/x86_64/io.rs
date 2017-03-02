@@ -72,6 +72,11 @@ pub mod console {
     unsafe fn newline() {
         cursor_x = 0;
         cursor_y += 1;
+
+        if cursor_y >= 25 {
+            scroll();
+        }
+
         update_cursor();
     }
 
@@ -99,10 +104,6 @@ pub mod console {
 
         if cursor_x >= 80 {
             newline();
-        }
-
-        if cursor_y >= 25 {
-            scroll();
         }
 
         update_cursor();
