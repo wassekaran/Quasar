@@ -81,3 +81,11 @@ $(GRUB_DIR):
 
 run: geniso
 	qemu-system-x86_64 $(ISO) -monitor stdio
+
+clean-iso:
+	rm -rf $(ISO_DIR) $(ISO)
+
+distclean:
+	rm -rf autom4te.cache config.log config.status Makefile
+
+make clean-all: clean clean-iso distclean
