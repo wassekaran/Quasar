@@ -53,12 +53,12 @@ pub mod console {
 
     static VIDEO_MEM: u64 = 0xB8000;
 
-    static mut cursor_x: u64 = 0;
-    static mut cursor_y: u64 = 0;
+    static mut CURSOR_X: u64 = 0;
+    static mut CURSOR_Y: u64 = 0;
 
     #[inline(always)]
     unsafe fn update_cursor() {
-        let offset: u64 = cursor_y * 80 + cursor_x;
+        let offset: u64 = CURSOR_Y * 80 + CURSOR_X;
         let off_low = offset & 0xFF;
         let off_high = (offset >> 8) & 0xFF;
 
@@ -70,10 +70,10 @@ pub mod console {
 
     #[inline(always)]
     unsafe fn newline() {
-        cursor_x = 0;
-        cursor_y += 1;
+        CURSOR_X = 0;
+        CURSOR_Y += 1;
 
-        if cursor_y >= 25 {
+        if CURSOR_Y >= 25 {
             scroll();
         }
 
@@ -95,14 +95,14 @@ pub mod console {
             let offset = 24 * 80 + i;
             *video_ptr.offset(offset * 2) = 0x20;
         }
-        cursor_y -= 1;
+        CURSOR_Y -= 1;
     }
 
     #[inline(always)]
     unsafe fn forward_cursor() {
-        cursor_x += 1;
+        CURSOR_X += 1;
 
-        if cursor_x >= 80 {
+        if CURSOR_X >= 80 {
             newline();
         }
 
@@ -112,7 +112,7 @@ pub mod console {
     #[inline(always)]
     unsafe fn do_putcar(c: u8, color: Color) {
         // get video_ptr
-        let offset = cursor_y * 80 + cursor_x;
+        let offset = CURSOR_Y * 80 + CURSOR_X;
         let video_ptr = (VIDEO_MEM + offset * 2) as *mut u8;
         *video_ptr.offset(1) = color as u8;
         *video_ptr = c;

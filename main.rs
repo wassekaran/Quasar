@@ -5,9 +5,6 @@
 #![feature(intrinsics)]
 #![feature(lang_items)]
 #![no_std]
-
-#![allow(non_upper_case_globals)]
-#![allow(safe_extern_statics)]
 #![deny(warnings)]
 
 pub mod arch;

@@ -31,7 +31,7 @@ const IDT_SIZE: u16 = 256;
 // All the entries are statically initialized so that all interrupts are by
 // default handled by a function that do nothing.
 // Specialized handlers will come later
-static mut descriptors: [InterruptDescr ; IDT_SIZE as usize] = [InterruptDescr {
+static mut DESCRIPTORS: [InterruptDescr ; IDT_SIZE as usize] = [InterruptDescr {
     clbk_low:  0,
     clbk_mid:  0,
     clbk_high: 0,
@@ -41,7 +41,7 @@ static mut descriptors: [InterruptDescr ; IDT_SIZE as usize] = [InterruptDescr {
     zero2: 0
 } ; IDT_SIZE as usize];
 
-static mut idt_table: IDTable = IDTable {
+static mut IDT_TABLE: IDTable = IDTable {
     limit: 0,
     base: 0 as *const [InterruptDescr ; IDT_SIZE as usize]
 };
@@ -51,11 +51,11 @@ pub unsafe fn load_descriptor(num: u16, clbk: u64, flags: u8, selector: u16) {
         return;
     }
 
-    descriptors[num as usize].clbk_low  = (clbk & 0xFFFF) as u16;
-    descriptors[num as usize].clbk_mid  = ((clbk >> 16) & 0xFFFF) as u16;
-    descriptors[num as usize].clbk_high = ((clbk >> 32) & 0xFFFFFFFF) as u32;
-    descriptors[num as usize].selector = selector;
-    descriptors[num as usize].flags = flags;
+    DESCRIPTORS[num as usize].clbk_low  = (clbk & 0xFFFF) as u16;
+    DESCRIPTORS[num as usize].clbk_mid  = ((clbk >> 16) & 0xFFFF) as u16;
+    DESCRIPTORS[num as usize].clbk_high = ((clbk >> 32) & 0xFFFFFFFF) as u32;
+    DESCRIPTORS[num as usize].selector = selector;
+    DESCRIPTORS[num as usize].flags = flags;
 }
 
 #[no_mangle]
@@ -73,18 +73,18 @@ extern {
 }
 
 pub unsafe fn setup() {
-    static mut idt_init: bool = false;
+    static mut IDT_INIT: bool = false;
 
-    if idt_init {
+    if IDT_INIT {
         // IDT already initialized
         return;
     }
 
-    idt_init = false;
+    IDT_INIT = false;
 
     // FIXME: this souldn't be necessary (see above)
-    idt_table.limit = IDT_SIZE * 8;
-    idt_table.base = &descriptors as *const [InterruptDescr ; 256];
+    IDT_TABLE.limit = IDT_SIZE * 8;
+    IDT_TABLE.base = &DESCRIPTORS as *const [InterruptDescr ; 256];
 
     // FIXME: this shouldn't be necessary (see above)
     let mut i = 0;
@@ -106,7 +106,7 @@ pub unsafe fn setup() {
     out(0x21, 0x00u8);
     out(0xA1, 0x00u8);
 
-    asm!("lidt ($0)" :: "r" (&idt_table));
+    asm!("lidt ($0)" :: "r" (&IDT_TABLE));
     asm!("sti");
 }
 
