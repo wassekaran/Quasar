@@ -16,9 +16,8 @@ _irq_default_handler:
     [GLOBAL _asm_handler_%1]
 
     _asm_irq_handler_%1:
-        push    word    %1
+        mov     rdi,    %1
         call    irq_default_handler
-        add     rsp,    2
         mov     al,     0x20
         out     0x20,   al
         iretq
